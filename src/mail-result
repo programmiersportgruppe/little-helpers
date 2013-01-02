@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+function usage {
+    echo "${0} [options] -j JOB_NAME -m MAIL_TO command args... "
+    echo "    where OPTIONS ="
+    echo "        -n  | --no-mail-on-success send mail only on failure."
+    echo "          JOB_NAME = job name to be used for mail subject."
+    echo "          MAIL_TO  = list of mail recipients, space separated."
+    echo "          command  = command to be executed"
+
+    }
+
+function die() {
+    echo ${1}  >&2
+    echo       >&2
+    usage
+    exit 1
+}
+
+JOB=""
+MAIL_TO=""
+
+while (( $# > 0 )); do
+    case $1 in
+        -j | --job)
+            shift;
+            [[ $1 ]] || die "Missing argument of -j | --job"
+            JOB=$1
+            ;;
+        -m | --mail-to)
+            shift;
+            [[ $1 ]] || die "Missing argument of -m | --mail-to"
+            MAIL_TO=$1
+            ;;
+        -n | --no-mail-on-success)
+            NO_MAIL_ON_SUCCESS=true
+            ;;
+       -? | -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -z "$JOB" ]; then
+        echo "missing argument JOB_NAME">&2
+        exit 1
+fi
+
+if [ -z "$MAIL_TO" ]; then
+        echo "missing argument MAIL_TO">&2
+        exit 1
+fi
+
+
+if [ -z "$1" ]; then
+        echo "missing command">&2
+        exit 1
+fi
+
+OUTPUT=$( eval "$@" 2>&1)
+STATUS=$?
+
+TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+
+if [ $STATUS == 0 ]; then
+        echo "$TIMESTAMP JOB '$JOB' - SUCCESS" >>~/jobs.log
+        SUBJECT_LINE="[SUCCESS] JOB '$JOB' on `hostname -s`"
+        if [ -z  "${NO_MAIL_ON_SUCCESS}" ] ; then
+                echo $OUTPUT | mail -s "$SUBJECT_LINE" $MAIL_TO
+        fi
+
+else
+        echo "$TIMESTAMP JOB '$JOB' - FAILED" >>~/jobs.log
+        SUBJECT_LINE="[FAILURE] JOB '$JOB' on `hostname -s`"
+        echo $OUTPUT | mail  -s "$SUBJECT_LINE"i $MAIL_TO
+        exit 1
+fi
