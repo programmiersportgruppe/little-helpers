@@ -1,0 +1,14 @@
+#!/bin/bash
+fail ()
+{
+	say fail
+    exit $1
+}
+
+eval $@
+status=$?
+if [ $status -ne 0 ]; then
+        fail $status
+fi
+
+say success

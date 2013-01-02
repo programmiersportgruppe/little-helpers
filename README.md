@@ -30,3 +30,24 @@ To suppress the email sending in case of success the option `-n` can be specifie
 * The executable script `mail-result` needs to be on the path.
 * The `mail` utility needs be working.
 
+# tell
+
+This script executes a command tells the user upon completion whether it
+succeeded or failed using a text-to-speech facility. This is ideally suited
+for long running tasks that require attention when done.
+
+## Usage
+
+~~~ {.bash}
+tell make all
+~~~
+
+This will say 'success' or 'fail' on completion and also return the exit status
+that make originally returned, so something like this is still possible:
+
+~~~ {.bash}
+tell make all && git push
+~~~
+
+It currently only with macosx, however espeak could be used on linux.
+
